@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مصروفي – إدارة مصروف الأطفال</title>
+<style>
+:root{--bg:#fdf6e3;--card:#fff;--text:#1b2a41;--muted:#66728a;--line:#eadfc4;--pri:#1f9d7a;--priT:#fff;--inc:#168a5f;--exp:#d6452f;--coin:#f5b82e;--track:#f1e8cf;--glass:#dff3ec;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a26;--card:#1b2635;--text:#eef2f8;--muted:#9aa7bb;--line:#2b384b;--pri:#3fc9a2;--priT:#06241c;--inc:#4cc98a;--exp:#ff7f6a;--coin:#f5b82e;--track:#2b384b;--glass:#16302d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121a26;--card:#1b2635;--text:#eef2f8;--muted:#9aa7bb;--line:#2b384b;--pri:#3fc9a2;--priT:#06241c;--inc:#4cc98a;--exp:#ff7f6a;--coin:#f5b82e;--track:#2b384b;--glass:#16302d;color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,"Segoe UI","Noto Sans Arabic",Arial,sans-serif;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:4px 0 2px}
+h2{font-size:1.1rem;margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,button{font:inherit;color:inherit}
+input,select{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+.grow{flex:1 1 120px}
+button{cursor:pointer;border:0;border-radius:10px;padding:9px 14px;background:var(--pri);color:var(--priT);font-weight:700}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:400}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.tab{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:999px;font-weight:400}
+.tab.on{background:var(--coin);color:#3a2a00;border-color:var(--coin);font-weight:700}
+.bal{font-size:2.4rem;font-weight:800;margin:0}
+.stats{display:flex;gap:18px;margin-top:6px;color:var(--muted)}
+.in{color:var(--inc);font-weight:700}.out{color:var(--exp);font-weight:700}
+.goal{display:flex;gap:18px;align-items:center}
+.jar{width:84px;height:110px;border:4px solid var(--muted);border-top-width:8px;border-radius:10px 10px 26px 26px;position:relative;overflow:hidden;background:var(--glass);flex:none}
+.fill{position:absolute;bottom:0;left:0;right:0;background:var(--coin);height:0;transition:height .5s}
+.jar b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text)}
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+li:first-child{border-top:0}
+li .what{flex:1}li small{color:var(--muted);display:block}
+li button{background:transparent;color:var(--muted);padding:4px 9px;border:1px solid var(--line);font-weight:400}
+.msg{color:var(--exp);min-height:1.4em;margin:8px 0 0}
+.cong{background:var(--coin);color:#3a2a00;font-weight:800;border-radius:12px;padding:10px 14px;margin:0 0 12px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border-radius:0;background:var(--bg);color:var(--text);font-weight:400}
+.seg button.on{background:var(--pri);color:var(--priT);font-weight:700}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>مصروفي</h1>
+  <p class="sub">سجّل مصروفك، وشوف فلوسك بتزيد، واجمع لحد ما توصل لهدفك.</p>
+
+  <div class="card">
+    <div class="row">
+      <input id="newName" class="grow" placeholder="اسم الطفل" maxlength="20" aria-label="اسم الطفل">
+      <button id="addKid">إضافة طفل</button>
+    </div>
+    <div id="tabs" class="tabs"></div>
+    <p id="empty" class="sub" style="margin:0">أضف أول طفل عشان تبدأ.</p>
+  </div>
+
+  <div id="main" hidden>
+    <div class="card">
+      <h2>رصيدك</h2>
+      <p class="bal" id="bal"></p>
+      <div class="stats"><span>دخل: <span class="in" id="tin"></span></span><span>مصروف: <span class="out" id="tout"></span></span></div>
+    </div>
+
+    <div class="card">
+      <h2>هدف الادخار</h2>
+      <p id="cong" class="cong" role="status" hidden></p>
+      <div class="goal">
+        <div class="jar" role="img" aria-label="تقدّم الهدف"><div class="fill" id="fill"></div><b id="pct"></b></div>
+        <div class="grow">
+          <p id="goalTxt" style="margin:0 0 10px"></p>
+          <div class="row">
+            <input id="gName" class="grow" placeholder="عايز تشتري إيه؟" maxlength="30" aria-label="اسم الهدف">
+            <input id="gAmt" type="number" min="1" inputmode="decimal" placeholder="المبلغ" style="width:100px" aria-label="مبلغ الهدف">
+            <button id="setGoal">حفظ الهدف</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>تسجيل حركة جديدة</h2>
+      <div class="row">
+        <div class="seg" role="group" aria-label="نوع الحركة">
+          <button id="tIn" class="on" type="button">دخل</button>
+          <button id="tOut" type="button">مصروف</button>
+        </div>
+        <input id="amt" type="number" min="0" step="any" inputmode="decimal" placeholder="المبلغ" style="width:110px" aria-label="المبلغ">
+        <select id="cat" aria-label="النوع"></select>
+        <input id="note" class="grow" placeholder="ملاحظة (اختياري)" maxlength="40" aria-label="ملاحظة">
+        <button id="addTx">حفظ</button>
+      </div>
+      <p class="msg" id="msg" role="alert"></p>
+    </div>
+
+    <div class="card">
+      <h2>آخر الحركات</h2>
+      <ul id="list"></ul>
+      <p id="noTx" class="sub" style="margin:0">لسه مفيش حركات.</p>
+    </div>
+
+    <div class="row"><button id="delKid" class="ghost">حذف الطفل</button></div>
+  </div>
+</div>
+
+<script>
+var KEY="masroofi-v1", S={kids:[],cur:null}, type="in", armed=false;
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&Array.isArray(p.kids))S=p;}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function $(id){return document.getElementById(id);}
+function fmt(n){return Number(n).toLocaleString("ar-EG",{maximumFractionDigits:2})+" ج.م";}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function kid(){return S.kids.filter(function(k){return k.id===S.cur;})[0];}
+function sum(k,t){return k.tx.filter(function(x){return x.type===t;}).reduce(function(a,x){return a+x.amt;},0);}
+var CATS={in:["مصروف أسبوعي","هدية","مكافأة","أخرى"],out:["حلويات","ألعاب","مدرسة","هدايا","أخرى"]};
+function fillCats(){var s=$("cat");s.textContent="";CATS[type].forEach(function(c){var o=document.createElement("option");o.textContent=c;s.appendChild(o);});}
+
+var cT;function celebrate(n){var c=$("cong");c.textContent="🎉 مبروك! وصلت لهدفك: "+n;c.hidden=false;clearTimeout(cT);cT=setTimeout(function(){c.hidden=true;},6000);}
+function render(){
+  var tabs=$("tabs");tabs.textContent="";
+  S.kids.forEach(function(k){var b=document.createElement("button");b.type="button";b.className="tab"+(k.id===S.cur?" on":"");b.textContent=k.name;
+    b.onclick=function(){S.cur=k.id;armed=false;$("delKid").textContent="حذف الطفل";save();render();};tabs.appendChild(b);});
+  var k=kid();$("empty").hidden=!!k;$("main").hidden=!k;if(!k)return;
+  var i=sum(k,"in"),o=sum(k,"out"),bal=i-o;
+  $("bal").textContent=fmt(bal);$("tin").textContent=fmt(i);$("tout").textContent=fmt(o);
+  var g=k.goal;
+  if(g&&g.target>0&&bal>=g.target){celebrate(g.name);k.goal=null;save();g=null;}
+  if(g&&g.target>0){var pc=Math.max(0,Math.min(100,bal/g.target*100));
+    $("fill").style.height=pc+"%";$("pct").textContent=Math.round(pc).toLocaleString("ar-EG")+"٪";
+    $("goalTxt").textContent=bal>=g.target?"مبروك! وصلت لهدفك: "+g.name:"جمعت "+fmt(Math.max(0,bal))+" من "+fmt(g.target)+" لشراء: "+g.name;
+  }else{$("fill").style.height="0";$("pct").textContent="";$("goalTxt").textContent="حدد هدف وابدأ اجمع ليه.";}
+  var ul=$("list");ul.textContent="";$("noTx").hidden=k.tx.length>0;
+  k.tx.slice(0,30).forEach(function(x){
+    var li=document.createElement("li"),w=document.createElement("div"),s=document.createElement("small"),a=document.createElement("span"),d=document.createElement("button");
+    w.className="what";w.textContent=x.cat+(x.note?" – "+x.note:"");s.textContent=x.date;w.appendChild(s);
+    a.className=x.type==="in"?"in":"out";a.textContent=(x.type==="in"?"+":"−")+fmt(x.amt);
+    d.type="button";d.textContent="مسح";d.onclick=function(){k.tx=k.tx.filter(function(y){return y.id!==x.id;});save();render();};
+    li.appendChild(w);li.appendChild(a);li.appendChild(d);ul.appendChild(li);});
+}
+function setType(t){type=t;$("tIn").className=t==="in"?"on":"";$("tOut").className=t==="out"?"on":"";fillCats();}
+$("tIn").onclick=function(){setType("in");};$("tOut").onclick=function(){setType("out");};
+
+function addKid(){var n=$("newName").value.trim();if(!n)return;var k={id:uid(),name:n,tx:[],goal:null};S.kids.push(k);S.cur=k.id;$("newName").value="";save();render();}
+$("addKid").onclick=addKid;$("newName").onkeydown=function(e){if(e.key==="Enter")addKid();};
+
+$("addTx").onclick=function(){
+  var k=kid();if(!k)return;var amt=parseFloat($("amt").value);var m=$("msg");m.textContent="";
+  if(!(amt>0)){m.textContent="اكتب مبلغ أكبر من صفر.";return;}
+  if(type==="out"&&amt>sum(k,"in")-sum(k,"out")){m.textContent="المبلغ أكبر من رصيدك. اختار مبلغ أقل.";return;}
+  k.tx.unshift({id:uid(),type:type,amt:amt,cat:$("cat").value,note:$("note").value.trim(),date:new Date().toLocaleDateString("ar-EG")});
+  $("amt").value="";$("note").value="";save();render();};
+
+$("setGoal").onclick=function(){var k=kid();if(!k)return;var n=$("gName").value.trim(),t=parseFloat($("gAmt").value);
+  if(!n||!(t>0))return;k.goal={name:n,target:t};$("gName").value="";$("gAmt").value="";save();render();};
+
+$("delKid").onclick=function(){var b=$("delKid");
+  if(!armed){armed=true;b.textContent="اضغط تاني للتأكيد";return;}
+  S.kids=S.kids.filter(function(k){return k.id!==S.cur;});S.cur=S.kids.length?S.kids[0].id:null;armed=false;b.textContent="حذف الطفل";save();render();};
+
+if(!kid()&&S.kids.length)S.cur=S.kids[0].id;
+fillCats();render();
+</script>
+</body>
+</html>
